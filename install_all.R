@@ -19,12 +19,12 @@ install.packages("lattice") # конкурент ggplot2
 install.packages("vcd") # мозаичный график
 install.packages("hexbin") # график из шестиугольников
 install.packages("sjPlot") # визуализация результатов МНК
-
+install.packages("lmtest")
 
 
 install.packages("reshape2") # длинные <-> широкие таблицы
 install.packages("psych") # описательные статистики
-
+install.packages("foreign")
 
 install.packages("glmnet") # LASSO
 install.packages("HSAUR")
