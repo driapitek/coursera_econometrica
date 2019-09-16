@@ -1,0 +1,63 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+h <- airquality
+glimpse(h)
+
+ggplot(h, aes(Ozone, Temp)) +
+  geom_point()
+
+model <- lm(data = h, Ozone ~ Solar.R + Wind + Temp)
+
+vif(model)
+
+```
+
+
+Оценим ту же самую модель методом LASSO! Для этого нам надо сделать ряд вещей (в том же порядке, в каком они делались на лекциях):
+
+0) На подготовительном этапе нужно убрать все наблюдения, где есть NA (пропущенные значения). Это делается командой na.omit. К примеру, если Ваши данные находятся в переменной data, команда будет: data<-na.omit(data). Это убирает из data все строки, где есть NA и позволяет работать с данными, не думая о пропущенных значениях.
+
+1) Выделим зависимую переменную в отдельный вектор, а регрессоры (Wind, Solar.R и Temp) - в отдельный объект model.matrix
+
+2) Создадим вспомогательную последовательность значений параметра $\lambda$ следующим образом: seq(50,0.1,length=30)
+
+3) Оценим модель при помощи команды glmnet (из пакета glmnet), используя построенные на шаге 2 lambda и параметр alpha = 1 (что соответствует LASSO, при других alpha можно получить Ридж-регрессию или эластичную сеть)
+
+Посмотрим на коэффициенты модели при lambda = 1. Для этого используем команду coef с опцией s=1. В ответ введите коэффициент при переменной Temp с точностью до третьего знака после запятой. Не забывайте про округление!
+
+
+```{r}
+h <- na.omit(h)
+y <- h$Ozone
+x0 <- model.matrix(data=h, Ozone~0 + Wind + Solar.R + Temp)
+lambda <- seq(50,0.1,length=30)
+m_lasso <- glmnet(x0, y, alpha = 1, lambda = lambda)
+coef(m_lasso, s=1)
+
+m_rr <- glmnet(x0, y, alpha = 0, lambda = lambda)
+coef(m_rr, s=2)
+
+round(1.57646691, 3)
+
+plot(m_lasso, xvar = "norm", label = TRUE)
+
+h.pca <- prcomp(x0, scale = TRUE)
+
+data <- h.pca$x[,1]
+
+glimpse(h.pca$x)
+
+class(h.pca$x)
+
+data <- as.data.frame(h.pca$x)
+
+ggplot(data, aes(PC2, PC3)) + geom_point()
+
+```
+
