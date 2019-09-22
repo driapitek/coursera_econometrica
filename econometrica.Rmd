@@ -2274,7 +2274,6 @@ gqtest(model2, order.by = ~totsp, data = h, fraction = 0.2)
 
 ```{r}
 model2 <- lm(data = h, log(price) ~ log(totsp))
-
 ```
 
 Это позволит сократить отношение RSS. Для данной модели почти в 4 раза
@@ -2288,3 +2287,120 @@ model2 <- lm(data = h, log(price) ~ log(totsp))
 
 
 К сожалению, очень распространена практика, когда исследователь сначала проверяет гипотезу, есть гетероскедастичность или нет, и, соответственно, узнав, что гетероскедастичность есть, тогда используются робастные стандартные ошибки, а если гетероскедастичности по тестам не обнаружено, используются обычные стандартные ошибки. Эта практика, к сожалению, неверная, потому что двойное тестирование всегда приводит к неправильным рассчитываемым по умолчанию уровням значимости, поэтому двойного тестирования следует избегать. Как только у вас есть теоретические основания ожидать гетероскедастичность, а у нас они есть, логично предположить, что разброс цены квартиры связан с ее размером, то надо использовать робастные стандартные ошибки даже до, собственно, тестирования гипотезы о том, есть гетероскедастичность или нет.
+
+## Экзамен
+
+```{r}
+library("Ecdat")
+library("glmnet") # LASSO + ridge
+library("lmtest")
+library("car")
+library("dplyr") # манипуляции с данными
+library("ggplot2") # графики
+```
+
+
+```{r}
+data(ChickWeight)
+glimpse(ChickWeight)
+
+#5
+ChickWeight %>% 
+  filter(Time == 10) %>% 
+  summarise(mean = mean(weight)) %>% 
+  round(digits = 2)
+
+#6
+ChickWeight %>% 
+  filter(Time == 21) %>% 
+  group_by(Diet) %>% 
+  summarise(mean = mean(weight))
+
+
+
+#7
+model <- lm(data = ChickWeight, weight ~ Time + Diet)
+summary(model)
+round(0.7453, 2)
+
+-245+0.08
+```
+
+$$test-statistic = \frac{\hat{\beta}_2 + \hat{\beta}_3 - (\beta_2 + \beta_3)}{\sqrt{\widehat{Var}(\hat{\beta}_2 + \hat{\beta}_3)}}$$]
+
+```{r}
+#12
+
+data("diamonds")
+glimpse(diamonds)
+qplot(data = diamonds, log(price), color = cut) + facet_grid(~cut)
+
+#13
+model <- lm(data=diamonds, price~carat+table+x+y+z+depth)
+summary(model)
+
+#14
+model <- lm(data=diamonds, price~carat+table+x+y+depth)
+summary(model)
+
+round(-102.490 - (qt(0.95, 53934))*3.084, 2)
+-102.490 + (qt(0.95, 53934))*3.084
+```
+
+```{r}
+#19
+data(BudgetFood)
+glimpse(BudgetFood)
+
+model <- lm(data = BudgetFood, wfood ~ totexp + size)
+summary(model)
+
+nd <- data.frame(size=4,totexp=700000)
+predict(model, newdata=nd, interval="prediction", level=0.9)
+```
+
+```{r}
+#20
+model <- lm(data = BudgetFood, wfood ~ totexp + size)
+resettest(model)
+
+#21
+
+h <- na.omit(BudgetFood)
+model_r <- lm(data=h, wfood~totexp+size)
+model_ur <- lm(data=h, wfood~totexp*sex+size*sex)
+waldtest(model_r,model_ur)
+```
+
+
+```{r}
+#26
+data(mtcars)
+
+model <- lm(data=mtcars, mpg~disp+hp+wt)
+vif(model)
+round(7.324517, 2)
+
+#27
+data <- mtcars[,c(3,4,6)]
+
+pca <- prcomp(data, scale  = TRUE)
+v <- pca$x[,1]
+round(sqrt(sum(v^2)),2)
+summary(pca$rotation)
+
+data <- as.data.frame(pca$x)
+data <- cbind(data, mtcars$mpg)
+
+model1 <- lm(data=data, mtcars$mpg~PC1+PC2)
+summary(model1)
+
+model2 <- lm(data=data, mtcars$mpg~PC1+PC2+PC3)
+summary(model2)
+
+```
+
+Для чего можно проверять гипотезу о том, что несколько коэффициентов одновременно равны нулю?
+Для того чтобы понять, необходимо ли добавлять в короткую (ограниченную) модель дополнительные регрессоры
+
+
